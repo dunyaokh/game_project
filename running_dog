@@ -1,0 +1,112 @@
+import pygame, os, random
+
+width, height = 670, 560
+fps = 12
+
+black, white, red, green, blue = (0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255)
+
+pygame.init()
+
+screen = pygame.display.set_mode((width, height))
+
+clock = pygame.time.Clock()
+
+x, y = width//2, height//2
+
+
+
+def load_image(name, color = None):
+    fullname = os.path.join('data', name)
+    try:
+        image = pygame.image.load(fullname)
+    except pygame.error as message:
+        print('Cannot load image:', name)
+        raise SystemExit(message)
+    
+    image = image.convert_alpha()
+    if color:
+        if color is -1:
+            color = image.get_at((0,0))
+        #image.set_colorkey(color)
+        image.set_colorkey((255, 255, 255))
+        
+    return image
+
+
+
+dog1 = load_image('dog1.png', -1)
+dog2 = load_image('dog2.png', -1)
+dog3 = load_image('dog3.png', -1)
+dog4 = load_image('dog4.png', -1)
+dog5 = load_image('dog5.png', -1)
+dog6 = load_image('dog6.png', -1)
+dog7 = load_image('dog7.png', -1)
+
+dogs = {1:dog1, 2:dog2, 3:dog3, 4:dog4, 5:dog5, 6:dog6, 7:dog7}
+dogg= 3
+
+
+sg
+class Dog(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = dog3
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        
+    def get_event(self, d):
+        self.image = dogs[d]
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def jump(self, dog_y):
+        self.image = dog3
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y+curr_y)
+    
+all_sprites = pygame.sprite.Group()
+dog = Dog()
+all_sprites.add(dog)
+jump = False
+curr_y = 0
+down = False
+running = True
+
+
+while running:
+    if not jump:
+        clock.tick(fps)
+    else:
+        clock.tick(fps*30)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == 32:
+                jump = True
+    if jump:
+        dog.jump(curr_y)
+        if curr_y <=-50 and not down:
+            down = True
+        elif curr_y != -51 and not down:
+            curr_y-=1
+        elif curr_y != -51 and down and curr_y!=0:
+            curr_y+=1
+        elif curr_y == 0 and down:
+            down = False
+            jump = False
+    
+    else:
+        dogg+=1
+        if dogg == 8:
+            dogg = 1
+        dog.get_event(dogg)
+            
+    all_sprites.update()
+    screen.fill((51, 204, 255))
+    pygame.draw.rect(screen, (100, 200, 130), pygame.Rect(0, height-height//3, width, height//3))
+    all_sprites.draw(screen)
+    
+    pygame.display.flip()
+ 
+pygame.quit()
