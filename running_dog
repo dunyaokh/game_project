@@ -1,6 +1,6 @@
 import pygame, os, random
 
-width, height = 670, 560
+width, height = 700, 460
 fps = 12
 
 black, white, red, green, blue = (0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255)
@@ -11,7 +11,10 @@ screen = pygame.display.set_mode((width, height))
 
 clock = pygame.time.Clock()
 
-x, y = width//2, height//2
+HEIGHT_JUMP = 150
+SPEED = 10
+D_JUMP = 5
+D_MOVE = 20
 
 
 
@@ -28,85 +31,138 @@ def load_image(name, color = None):
         if color is -1:
             color = image.get_at((0,0))
         #image.set_colorkey(color)
-        image.set_colorkey((255, 255, 255))
+        image.set_colorkey(white)
         
     return image
 
 
 
-dog1 = load_image('dog1.png', -1)
-dog2 = load_image('dog2.png', -1)
-dog3 = load_image('dog3.png', -1)
-dog4 = load_image('dog4.png', -1)
-dog5 = load_image('dog5.png', -1)
-dog6 = load_image('dog6.png', -1)
-dog7 = load_image('dog7.png', -1)
-
-dogs = {1:dog1, 2:dog2, 3:dog3, 4:dog4, 5:dog5, 6:dog6, 7:dog7}
-dogg= 3
-
-
-sg
 class Dog(pygame.sprite.Sprite):
+    
+    dog7 = load_image('dog1.png', -1)
+    dog6 = load_image('dog2.png', -1)
+    dog5 = load_image('dog3.png', -1)
+    dog4 = load_image('dog4.png', -1)
+    dog3 = load_image('dog5.png', -1)
+    dog2 = load_image('dog6.png', -1)
+    dog1 = load_image('dog7.png', -1)
+
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self, dog_sprites)
+        self.dogs = {1: self.dog1, 2: self.dog2, 3: self.dog3, 4: self.dog4, 5: self.dog5, 6: self.dog6, 7: self.dog7}
+        self.curr_dog = 3
+        self.image = self.dogs[self.curr_dog]
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.center = (x, y)
+        self.jump = False
+        self.down = False
+        self.move_forward = False
+        self.move_back = False
+
+
+    def update(self):
+        self.curr_dog = (self.curr_dog + 1) % len(self.dogs)+1
+        self.image = self.dogs[self.curr_dog]
+
+        if self.jump:
+            clock.tick(fps*20)
+            self.curr_dog = 2
+            if not self.down:
+                self.y -= D_JUMP
+                if self.y < height//2-100:
+                    self.down = True
+            else:
+                self.y += D_JUMP
+                if self.y >= height // 2:
+                    self.y = height // 2
+                    self.down = False
+                    self.jump = False
+        if self.move_forward:
+            clock.tick(fps*50)
+            self.curr_dog = 2
+            if self.x < pos_x:
+                self.x += D_MOVE
+            elif self.x >= pos_x:
+                self.move_forward = False
+
+        if self.move_back:
+            clock.tick(fps*50)
+            self.curr_dog = 2
+            if self.x > pos_x:
+                self.x -= D_MOVE
+            elif self.x <= pos_x:
+                self.move_back = False
+
+        self.rect.center = self.x, self.y
+
+class Ball(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = dog3
+        self.image = load_image('ball.png')
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
-        
-    def get_event(self, d):
-        self.image = dogs[d]
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+        self.x = width+10
+        self.y = height-height//3-10
+        self.rect.center = (self.x, self.y)
 
-    def jump(self, dog_y):
-        self.image = dog3
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y+curr_y)
-    
-all_sprites = pygame.sprite.Group()
-dog = Dog()
-all_sprites.add(dog)
-jump = False
-curr_y = 0
-down = False
+    def update(self):
+        clock.tick(fps*100)
+        self.x-=11
+        self.rect.center = (self.x, self.y)
+
+
+dog_sprites = pygame.sprite.Group()
+
+ball_sprites = pygame.sprite.Group()
+
+
+dog = Dog(width//2, height//2)
+
+pos_x = 0
+
 running = True
 
+count_iter = 0
 
 while running:
-    if not jump:
-        clock.tick(fps)
-    else:
-        clock.tick(fps*30)
+    clock.tick(fps)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == 32:
-                jump = True
-    if jump:
-        dog.jump(curr_y)
-        if curr_y <=-50 and not down:
-            down = True
-        elif curr_y != -51 and not down:
-            curr_y-=1
-        elif curr_y != -51 and down and curr_y!=0:
-            curr_y+=1
-        elif curr_y == 0 and down:
-            down = False
-            jump = False
-    
-    else:
-        dogg+=1
-        if dogg == 8:
-            dogg = 1
-        dog.get_event(dogg)
-            
-    all_sprites.update()
+                dog.jump = True
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+            pos_x = event.pos[0]
+            if pos_x > dog.x:
+                dog.move_forward = True
+            elif pos_x < dog.x:
+                dog.move_back = True
+        num = random.randint(1, 10)
+        print(num)
+        if num == 1:
+            print(9999)
+            if count_iter > 20:
+                ball = Ball()
+                print(000000)
+                count_iter = 0
+        else:
+            count_iter += 1
+        print('-----')
+        print(count_iter)
+        print('=========')
+
+
+    dog_sprites.update()
+    ball_sprites.update()
     screen.fill((51, 204, 255))
     pygame.draw.rect(screen, (100, 200, 130), pygame.Rect(0, height-height//3, width, height//3))
-    all_sprites.draw(screen)
-    
+    dog_sprites.draw(screen)
+    ball_sprites.draw(screen)
+
     pygame.display.flip()
  
 pygame.quit()
+
+
