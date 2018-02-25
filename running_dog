@@ -1,13 +1,15 @@
 import pygame, os, random
 
-width, height = 1000, 400
-fps = 12
+WIDTH, HEIGHT = 640, 296
+FPS = 18
 
-black, white, red, green, blue = (0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255)
+GRAY, DARK_GRAY, BLACK = (204, 205, 204), (179, 180, 179), (0, 0, 0)
 
 pygame.init()
 
-screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption('The Dog Game')
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 clock = pygame.time.Clock()
 
@@ -16,29 +18,17 @@ SPEED = 10
 D_JUMP = 5
 D_MOVE = 20
 
-def startscreen():
-    introText = ["ИГРА", "",
-                "Начать игру"]    
-    screen.fill((177, 230, 151))
-    font = pygame.font.Font(pygame.font.match_font(swiss721heavy), 45)
-    textCoord = height//4
-    for line in introText:
-        stringRendered = font.render(line, 1, (48, 28, 12))
-        introRect = stringRendered.get_rect()
-        textCoord += 10
-        introRect.center = (width//2, textCoord)
-        textCoord += introRect.height
-        screen.blit(stringRendered, introRect)
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                pygame.quit()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return None
-        pygame.display.flip()
-        clock.tick(fps)    
+RECT_HEIGHT = HEIGHT // 3
+
+RECT_COOR = HEIGHT - RECT_HEIGHT
+
+CENTER_X, CENTER_Y = WIDTH // 2, HEIGHT // 2
+
+ball_coor_x = WIDTH + 10
+
+ball_coor_y = HEIGHT - 35
+
+dog_coor_x = CENTER_X
 
 def load_image(name, color = None):
     fullname = os.path.join('data', name)
@@ -52,34 +42,143 @@ def load_image(name, color = None):
     if color:
         if color is -1:
             color = image.get_at((0,0))
-        #image.set_colorkey(color)
-        image.set_colorkey(white)
+        image.set_colorkey(color)
         
     return image
 
+pygame.display.set_icon(load_image('dogs_icon.png'))
 
+class GUI:
+    def __init__(self):
+        self.elements = []
+
+    def add_element(self, element):
+        self.elements.append(element)
+
+    def render(self, surface):
+        for element in self.elements:
+            render = getattr(element, "render", None)
+            if callable(render):
+                element.render(surface)                    
+
+    def update(self):
+        for element in self.elements:
+            update = getattr(element, "update", None)
+            if callable(update):
+                element.update()
+
+    def get_event(self, event):
+        for element in self.elements:
+            get_event = getattr(element, "get_event", None)
+            if callable(get_event):
+                element.get_event(event)
+
+class Icons(GUI):
+    def icon(self, command):
+        self.command = command
+        
+    def render(self):
+        mouse = load_image('dogs_mouse.png')
+        mouse_r = load_image('dogs_mouse_right.png')
+        mouse_l = load_image('dogs_mouse_left.png')
+        space = load_image('dogs_space.png')
+        space2 = load_image('dogs_space2.png')
+        text = load_image('dogs_rules.png')
+        mouse_im = mouse
+        space_im = space
+        text_im = text
+        if self.command == 'back' or self.command == 'forward':
+            mouse_im = mouse_r
+        elif self.command == 'center':
+            mouse_im = mouse_l
+        elif self.command == 'jump':
+            space_im = space2
+        elif self.command == 'mouse':
+            mouse_im = mouse
+        elif self.command == 'space':
+            space_im = space
+            
+        rect = mouse_im.get_rect()
+        mouse_coor = (20, 25)
+        screen.blit(mouse_im, mouse_coor)
+        
+        rect = space_im.get_rect()
+        space_coor = (20, 123)
+        screen.blit(space_im, space_coor)
+
+        rect = text_im.get_rect()
+        text_coor = (97, 25)
+        screen.blit(text_im, text_coor)
+
+class Health(GUI):
+    def __init__(self):
+        self.ok = load_image('dogs_ok_circle.png')
+        self.not_ok = load_image('dogs_notok_circle.png')
+        self.counter = [1 for i in range(10)]
+        self.converting = {0: self.not_ok, 1: self.ok}
+    def render(self):
+        ball_r = 7
+        ball_x = WIDTH-5
+        for i in reversed(self.counter):
+            ball_x-=10+ball_r
+            screen.blit(self.converting[i], (ball_x, 8))
 
 class Dog(pygame.sprite.Sprite):
     
-    dog7 = load_image('dog1.png', -1)
-    dog6 = load_image('dog2.png', -1)
-    dog5 = load_image('dog3.png', -1)
-    dog4 = load_image('dog4.png', -1)
-    dog3 = load_image('dog5.png', -1)
-    dog2 = load_image('dog6.png', -1)
-    dog1 = load_image('dog7.png', -1)
+    dog1 = load_image('dogs_dog1.png', -1)
+    dog2 = load_image('dogs_dog2.png', -1)
+    dog3 = load_image('dogs_dog3.png', -1)
+    dog4 = load_image('dogs_dog4.png', -1)
+    dog5 = load_image('dogs_dog5.png', -1)
+    dog6 = load_image('dogs_dog6.png', -1)
+    dog7 = load_image('dogs_dog7.png', -1)
+    dog8 = load_image('dogs_dog8.png', -1)
+    dog9 = load_image('dogs_dog9.png', -1)
+    dog10 = load_image('dogs_dog10.png', -1)
+    dog11 = load_image('dogs_dog11.png', -1)
+    dog12 = load_image('dogs_dog12.png', -1)
+    dog13 = load_image('dogs_dog13.png', -1)
+    dog14 = load_image('dogs_dog14.png', -1)
+    dog15 = load_image('dogs_dog15.png', -1)
+    dog16 = load_image('dogs_dog16.png', -1)
+    dog17 = load_image('dogs_dog17.png', -1)
+    dog18 = load_image('dogs_dog18.png', -1)
+    dog19 = load_image('dogs_dog19.png', -1)
+    dog20 = load_image('dogs_dog20.png', -1)
+    dog21 = load_image('dogs_dog21.png', -1)
+    dog22 = load_image('dogs_dog22.png', -1)
+    dog23 = load_image('dogs_dog23.png', -1)
+    dog24 = load_image('dogs_dog24.png', -1)
+    dog25 = load_image('dogs_dog25.png', -1)
+    dog26 = load_image('dogs_dog26.png', -1)
+    dog27 = load_image('dogs_dog27.png', -1)
+    dog28 = load_image('dogs_dog28.png', -1)
+    dog29 = load_image('dogs_dog29.png', -1)
+    dog30 = load_image('dogs_dog30.png', -1)
+    dog31 = load_image('dogs_dog31.png', -1)
+    dog32 = load_image('dogs_dog32.png', -1)
+    
 
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self, dog_sprites)
-        self.dogs = {1: self.dog1, 2: self.dog2, 3: self.dog3, 4: self.dog4, 5: self.dog5, 6: self.dog6, 7: self.dog7}
-        self.curr_dog = 3
+        self.dogs = {1: self.dog1, 2: self.dog2, 3: self.dog3, 4: self.dog4, 5: self.dog5, 
+                     6: self.dog6, 7: self.dog7, 8: self.dog8, 9: self.dog9, 10: self.dog10, 
+                     11: self.dog11, 12: self.dog12, 13: self.dog13, 14: self.dog14, 15: self.dog15, 
+                     16: self.dog16, 17: self.dog17, 18: self.dog18, 19: self.dog19, 20: self.dog20,
+                     21: self.dog21, 22: self.dog22, 23: self.dog23, 24: self.dog24, 25: self.dog25,
+                     26: self.dog26, 27: self.dog27, 28: self.dog28, 29: self.dog29, 30: self.dog30,
+                     31: self.dog31, 32: self.dog32
+                     }
+        self.curr_dog = 11
         self.image = self.dogs[self.curr_dog]
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
-        self.rect.center = (x, y)
+        self.rect.midbottom = (x, y)
         self.jump = False
         self.down = False
+        self.HIGHEST_POS = 60
+        self.DOWN_Y = self.y
         self.move_forward = False
         self.move_back = False
 
@@ -88,61 +187,244 @@ class Dog(pygame.sprite.Sprite):
         self.curr_dog = (self.curr_dog + 1) % len(self.dogs)+1
         self.image = self.dogs[self.curr_dog]
 
+        self.mask = pygame.mask.from_surface(self.image)
+
         if self.jump:
-            self.curr_dog = 2
+            self.curr_dog = 11
             if not self.down:
-                self.y -= D_JUMP
-                if self.y < height//2-100:
+                self.y-= D_JUMP
+                if self.y < self.DOWN_Y-self.HIGHEST_POS:
                     self.down = True
             else:
                 self.y += D_JUMP
-                if self.y >= height // 2:
-                    self.y = height // 2
+                if self.y >= self.DOWN_Y:
+                    self.y = self.DOWN_Y
                     self.down = False
                     self.jump = False
         if self.move_forward:
-            self.curr_dog = 2
+            self.curr_dog = 11
             if self.x < pos_x:
                 self.x += D_MOVE
             elif self.x >= pos_x:
                 self.move_forward = False
 
         if self.move_back:
-            self.curr_dog = 2
+            self.curr_dog = 11
             if self.x > pos_x:
                 self.x -= D_MOVE
             elif self.x <= pos_x:
                 self.move_back = False
 
-        self.rect.center = self.x, self.y
+        self.rect.midbottom = self.x, self.y
+
+class GR_Dog(Dog):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self, gr_dog_sprites)
+        self.dogs = {1: self.dog1, 2: self.dog2, 3: self.dog3, 4: self.dog4, 5: self.dog5, 
+                     6: self.dog6, 7: self.dog7, 8: self.dog8, 9: self.dog9, 10: self.dog10, 
+                     11: self.dog11, 12: self.dog12, 13: self.dog13, 14: self.dog14, 15: self.dog15, 
+                     16: self.dog16, 17: self.dog17, 18: self.dog18, 19: self.dog19, 20: self.dog20,
+                     21: self.dog21, 22: self.dog22, 23: self.dog23, 24: self.dog24, 25: self.dog25,
+                     26: self.dog26, 27: self.dog27, 28: self.dog28, 29: self.dog29, 30: self.dog30,
+                     31: self.dog31, 32: self.dog32
+                     }
+        self.curr_dog = 11
+        self.image = self.dogs[self.curr_dog]
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.midbottom = (x, y)
+        self.jump = False
+        self.down = False
+        self.HIGHEST_POS = 60
+        self.DOWN_Y = self.y
+        self.move_forward = False
+        self.move_back = False
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self, ball_sprites)
-        self.image = load_image('ball.png')
+        self.image = load_image('dogs_ball.png')
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.center = (self.x, self.y)
-
+        self.ball_speed = 6
+        self.mask = pygame.mask.from_surface(self.image)
     def update(self):
-        self.x -= 11
+        self.x -= self.ball_speed
         self.rect.center = (self.x, self.y)
 
+class Caught(Ball):
+    ball1 = load_image('dogs_ball.png')
+    ball2 = load_image('dogs_ball2.png')
+    ball3 = load_image('dogs_ball3.png')
+    ball4 = load_image('dogs_ball4.png')
+    
+    balls = {1: ball1, 2: ball2, 3: ball3, 4: ball4}
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self, caught_sprites)
+        self.image = self.ball1
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.curr_ball = 1
+        self.rect.center = (self.x, self.y)
+    def update(self):
+        self.curr_ball = (self.curr_ball + 1) % len(self.balls)+1
+        self.image = self.balls[self.curr_ball]
+        self.x -= 8
+        self.rect.center = (self.x, self.y)
+
+class GR_Ball(Ball):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self, gr_ball_sprites)
+        self.image = load_image('dogs_ball.png')
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.center = (self.x, self.y)
+        self.ball_speed = 6
+        self.mask = pygame.mask.from_surface(self.image)
+        
+def start_screen():   
+    screen.fill((179, 180, 179))
+    running = True
+    title = load_image('dogs_start.png')
+    title_im = title
+    title_rect = title_im.get_rect()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if 172 < event.pos[0] < 468 and 170 < event.pos[1] < 230:
+                    return None
+            elif event.type == pygame.KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+                    pygame.quit()
+        screen.blit(title_im, (0, 0))
+        pygame.display.flip()
+        clock.tick(FPS)
+
+def end_screen():
+    screen.fill((179, 180, 179))
+    running = True
+    title = load_image('dogs_end.png')
+    title_im = title
+    title_rect = title_im.get_rect()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if 172 < event.pos[0] < 468 and 168 < event.pos[1] < 232:
+                    return None
+            elif event.type == pygame.KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+                    pygame.quit()
+        screen.blit(title_im, (0, 0))
+        pygame.display.flip()
+        clock.tick(FPS)
 
 dog_sprites = pygame.sprite.Group()
 
 ball_sprites = pygame.sprite.Group()
 
-dog = Dog(width//2, height//2)
+dog_sprites = pygame.sprite.Group()
+
+caught_sprites = pygame.sprite.Group()
+
+gr_dog_sprites = pygame.sprite.Group()
+
+gr_ball_sprites = pygame.sprite.Group()
+
+gr_dog = GR_Dog(400, RECT_COOR+5)
+
+def game_rules():
+    icons = Icons()
+    global pos_x
+    gr_counter = 0
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                    pygame.quit()
+                return None
+        icons.icon('mouse')
+        icons.icon('space')
+        if 70 <= gr_counter <= 75:
+            pos_x = 290
+            icons.icon('back')
+            gr_dog.move_back = True
+        elif 150 <= gr_counter <= 155:
+            icons.icon('forward')
+            pos_x = 540
+            gr_dog.move_forward = True
+        elif 250 <= gr_counter <= 255:
+            icons.icon('center')
+            pos_x = 400
+            gr_dog.move_back = True
+        elif gr_counter == 280:
+            ball = GR_Ball(WIDTH + 10, RECT_COOR - 12)
+        elif 330 >= gr_counter >= 325:
+            icons.icon('jump')
+            gr_dog.jump = True
+        elif gr_counter >= 400:
+            gr_counter = 0
+        gr_counter+=1
+        caption_coor = (0, RECT_COOR)
+        caption_render = load_image('dogs_caption.png')
+        caption_rect = caption_render.get_rect()
+        
+ 
+        gr_dog_sprites.update()
+        gr_ball_sprites.update()
+        screen.fill(GRAY)
+        pygame.draw.rect(screen, BLACK, (0, RECT_COOR, WIDTH, HEIGHT//3))
+        pygame.draw.rect(screen, (DARK_GRAY), (0, RECT_COOR+2, WIDTH, HEIGHT//3))
+        gr_dog_sprites.draw(screen)
+        gr_ball_sprites.draw(screen)
+        screen.blit(caption_render, caption_coor)
+        icons.render()
+        pygame.display.flip()
+        clock.tick(FPS)
+        gr_counter+=1
+
+trees = load_image('trees.png')
+
+mistakes_counter = 0
 
 pos_x = 0
 
-running = True
+ball = 0
 
 count_iter = 0
 
-startscreen()
+caught_ball = 0
+
+times_collided = 0
+
+collided = False
+
+running = True
+
+start_screen()
+
+game_rules()
+
+dog = Dog(WIDTH // 2, HEIGHT - 15)
+
+health = Health()
 
 while running:
     for event in pygame.event.get():
@@ -151,29 +433,64 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 dog.jump = True
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-            pos_x = event.pos[0]
-            if pos_x > dog.x:
-                dog.move_forward = True
-            elif pos_x < dog.x:
-                dog.move_back = True
+            elif event.key == pygame.K_ESCAPE:
+                running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 3:
+                pos_x = event.pos[0]
+                if pos_x > dog.x:
+                    dog.move_forward = True
+                elif pos_x < dog.x:
+                    dog.move_back = True
+            elif event.button == 1:
+                pos_x = CENTER_X
+                if pos_x > dog.x:
+                    dog.move_forward = True
+                elif pos_x < dog.x:
+                    dog.move_back = Trueel
+                
        
-    time_ball = random.randint(1, 10)
+    time_ball = random.randint(1, 5)
     if time_ball == 1:
-        if count_iter > 40:
-            ball = Ball(width + 10, height - height // 3)
+        if count_iter > 100:
+            ball = Ball(ball_coor_x, ball_coor_y)
             count_iter = 0
             time_ball = random.randint(1, 10)
     count_iter += 1
-    
+
+
+    if ball and pygame.sprite.collide_mask(dog, ball) and not collided and not times_collided:
+        collided = True
+        times_collided = 1
+        
+    if times_collided and collided and mistakes_counter != 10:
+        health.counter[mistakes_counter] = 0
+        ball.ball_speed = 8
+        mistakes_counter += 1
+        caught_ball = Caught(ball.x, ball.y)
+        times_collided = 0
+        
+    elif health.counter[-1] == 0:
+        ball.speed = 400
+        end_screen()
+        health.counter = [1 for x in range(10)]
+        ball.speed = 6
+        mistakes_counter = 0
+        ball.kill()
+        caught_ball.kill()
+        
+    if ball and ball.rect.topleft[0]>dog.rect.topright[0]:
+        collided = False
 
     dog_sprites.update()
     ball_sprites.update()
-    screen.fill((51, 204, 255))
-    pygame.draw.rect(screen, (100, 200, 130), pygame.Rect(0, height-height//3, width, height//3))
+    caught_sprites.update()
+    screen.blit(trees, (0, 0))
     dog_sprites.draw(screen)
     ball_sprites.draw(screen)
+    caught_sprites.draw(screen)
+    health.render()
 
     pygame.display.flip()
-    clock.tick(fps) 
+    clock.tick(FPS)
 pygame.quit()
